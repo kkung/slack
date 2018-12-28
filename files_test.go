@@ -3,6 +3,7 @@ package slack
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/stretchr/testify/assert"
 	"log"
 	"net/http"
 	"net/url"
@@ -121,6 +122,39 @@ func uploadFileHandler(rw http.ResponseWriter, r *http.Request) {
 	rw.Write(response)
 }
 
+func uploadFileHandlerWithShare(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Set("Content-Type", "application/json")
+	response, _ := json.Marshal(fileResponseFull{
+		File: File{
+			Shares: FileShares{
+				Public: map[string][]FileShareInfo{
+					"C061EG9SL": {
+						{
+							ReplyUsers: []string{},
+							ReplyUserCount: 0,
+							ReplyCount: 0,
+							TS: "1532294750.000001",
+							ChannelName: "general",
+							TeamID: "T061EG9R6",
+						},
+					},
+				},
+				Private: map[string][]FileShareInfo{
+					"D0L4B9P0Q": {
+						{
+							ReplyUsers: []string{},
+							ReplyUserCount: 0,
+							ReplyCount: 0,
+							TS: "1532293503.000001",
+						},
+					},
+				},
+			},
+		},
+		SlackResponse: SlackResponse{Ok: true}})
+	rw.Write(response)
+}
+
 func TestUploadFile(t *testing.T) {
 	http.HandleFunc("/auth.test", authTestHandler)
 	http.HandleFunc("/files.upload", uploadFileHandler)
@@ -150,4 +184,23 @@ func TestUploadFile(t *testing.T) {
 	if _, err := api.UploadFile(params); err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
+}
+
+func TestUploadFileWithShare(t *testing.T) {
+	http.HandleFunc("/auth.test", authTestHandler)
+	http.HandleFunc("/files.upload", uploadFileHandlerWithShare)
+	once.Do(startServer)
+	APIURL = "http://" + serverAddr + "/"
+	api := New("testing-token")
+	params := FileUploadParameters{
+		Filename: "test.txt", Content: "test content",
+		Channels: []string{"CXXXXXXXX"}}
+
+	respFile, err := api.UploadFile(params)
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+
+	assert.Len(t, respFile.Shares.Public, 1)
+	assert.Len(t, respFile.Shares.Private, 1)
 }

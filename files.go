@@ -86,6 +86,8 @@ type File struct {
 	CommentsCount   int      `json:"comments_count"`
 	NumStars        int      `json:"num_stars"`
 	IsStarred       bool     `json:"is_starred"`
+
+	Shares FileShares `json:"shares"`
 }
 
 // FileUploadParameters contains all the parameters necessary (including the optional ones) for an UploadFile() request.
@@ -122,6 +124,24 @@ type fileResponseFull struct {
 	Files    []File    `json:"files"`
 
 	SlackResponse
+}
+
+type FileShareInfo struct {
+	ReplyUsers     []string `json:"reply_users"`
+	ReplyUserCount int      `json:"reply_users_count"`
+	ReplyCount     int      `json:"reply_count"`
+
+	TS        string `json:"ts"`
+	ThreadTS  string `json:"thread_ts"`
+	LastReply string `json:"latest_reply"`
+
+	ChannelName string `json:"channel_name"`
+	TeamID      string `json:"team_id"`
+}
+
+type FileShares struct {
+	Public  map[string][]FileShareInfo `json:"public"`
+	Private map[string][]FileShareInfo `json:"private"`
 }
 
 // NewGetFilesParameters provides an instance of GetFilesParameters with all the sane default values set
